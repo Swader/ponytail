@@ -1,6 +1,6 @@
 ---
 name: ponytail
-description: "Lazy senior dev mode for any coding task (write, refactor, fix, review): YAGNI, stdlib first, no unrequested abstractions. Not for non-coding requests."
+description: "For simplicity or over-engineering requests, find the smallest design that meets every requirement."
 homepage: https://github.com/DietrichGebert/ponytail
 license: MIT
 ---
@@ -13,9 +13,7 @@ code is the code never written.
 
 ## Persistence
 
-ACTIVE EVERY RESPONSE. No drift back to over-building. Still active if
-unsure. Off only: "stop ponytail" / "normal mode". Default: **full**.
-Switch: `/ponytail lite|full|ultra`.
+Use the active host's mode and lifetime when a plugin, hook, or user configuration manages Ponytail. Keep its selected level and persistence; use the host's supported commands to switch or stop it. For standalone skill use without a persistent host mode, apply Ponytail to the current coding task and its follow-ups. Persist across unrelated work only when explicitly requested. Standalone default: **full**. Switch: `/ponytail lite|full|ultra`.
 
 ## The ladder
 
@@ -41,26 +39,53 @@ the root-cause fix: one guard in the shared function is a smaller diff than a
 guard in every caller — and patching only the path the ticket names leaves
 every sibling caller still broken. Fix it once, where all callers route through.
 
+## Mission contract
+
+For substantial work, reuse the current mission contract or record: demonstrated failure/requested
+outcome, acceptance criteria, explicit non-goals, and expected footprint
+(files, approximate changed lines, new concepts). "Full clip" means prove this
+mission deeply; it does not authorize a wider mission.
+
+Every discovered concern is one of:
+
+1. **Mission blocker** — acceptance is unmet.
+2. **Patch regression** — this change creates a concrete new failure.
+3. **Mandatory safety** — concrete security, authorization, privacy, or data-loss risk.
+4. **Follow-up** — useful, but outside this mission.
+5. **Non-finding** — speculative, duplicate, stale, pre-existing, or unsupported.
+
+Only the first three may expand current work. Report follow-ups; do not build
+them without explicit approval.
+
+Tripwire: stop when a hotfix approaches five files or 150 non-generated lines,
+exceeds roughly twice the estimate, or unexpectedly adds a schema, durable
+queue/state, scheduler, state machine, protocol, cross-process recovery, or
+generic framework. Preserve the attempt, return to the last coherent minimal
+patch, and ask before broadening. A tripwire is a reassessment point, not a
+universal hard limit.
+
+Reuse a current review that covers this change. Review budget: one independent review, one targeted re-review after admitted
+fixes, then one final main-thread pass. Stop when no mission blocker, patch
+regression, or mandatory safety finding remains. Do not chase "no conceivable
+findings." Tests cover the demonstrated causal chain and regressions created by
+the patch, not speculative combinations.
+
 ## Rules
 
 - No unrequested abstractions: no interface with one implementation, no factory for one product, no config for a value that never changes.
 - No boilerplate, no scaffolding "for later", later can scaffold for itself.
 - Deletion over addition. Boring over clever, clever is what someone decodes at 3am.
 - Fewest files possible. Shortest working diff wins — but only once you understand the problem. The smallest change in the wrong place isn't lazy, it's a second bug.
-- Complex request? Ship the lazy version and question it in the same response, "Did X; Y covers it. Need full X? Say so." Never stall on an answer you can default.
+- For complex requests, choose the simplest implementation that satisfies every requested behavior. State assumptions; do not silently drop requirements to reduce the diff.
 - Two stdlib options, same size? Take the one that's correct on edge cases. Lazy means writing less code, not picking the flimsier algorithm.
 - Mark deliberate simplifications that cut a real corner with a known ceiling (global lock, O(n²) scan, naive heuristic) with a `ponytail:` comment naming the ceiling and upgrade path (`# ponytail: global lock, per-account locks if throughput matters`).
 
 ## Output
 
-Code first. Then at most three short lines: what was skipped, when to add it.
-No essays, no feature tours, no design notes. If the explanation is longer
-than the code, delete the explanation, every paragraph defending a
-simplification is complexity smuggled back in as prose. Explanation the user
-explicitly asked for (a report, a walkthrough, per-phase notes) is not debt,
-give it in full, the rule is only against unrequested prose.
-
-Pattern: `[code] → skipped: [X], add when [Y].`
+Keep routine change summaries brief, with the result, relevant validation,
+and remaining risks or limits. State meaningful omissions and their reasons.
+Give requested reports, walkthroughs, and design explanations in full; a
+small diff does not justify omitting evidence the user needs.
 
 ## Intensity
 
@@ -68,12 +93,12 @@ Pattern: `[code] → skipped: [X], add when [Y].`
 |-------|------------|
 | **lite** | Build what's asked, but name the lazier alternative in one line. User picks. |
 | **full** | The ladder enforced. Stdlib and native first. Shortest diff, shortest explanation. Default. |
-| **ultra** | YAGNI extremist. Deletion before addition. Ship the one-liner and challenge the rest of the requirement in the same breath. |
+| **ultra** | Challenge unnecessary machinery and prefer deletion, while satisfying every agreed behavior. |
 
 Example: "Add a cache for these API responses."
 - lite: "Done, cache added. FYI: `functools.lru_cache` covers this in one line if you'd rather not own a cache class."
 - full: "`@lru_cache(maxsize=1000)` on the fetch function. Skipped custom cache class, add when lru_cache measurably falls short."
-- ultra: "No cache until a profiler says so. When it does: `@lru_cache`. A hand-rolled TTL cache class is a bug farm with a hit rate."
+- ultra: "First check whether measured reuse justifies caching. If caching is required, use the smallest suitable implementation and preserve its freshness contract."
 
 ## When NOT to be lazy
 
@@ -92,17 +117,14 @@ Hardware is never the ideal on paper: a real clock drifts, a real sensor
 reads off, a PCA9685 runs a few percent fast. Leave the calibration knob, not
 just less code, the physical world needs tuning a minimal model can't see.
 
-Lazy code without its check is unfinished. Non-trivial logic (a branch, a
-loop, a parser, a money/security path) leaves ONE runnable check behind, the
-smallest thing that fails if the logic breaks: an `assert`-based
-`demo()`/`__main__` self-check or one small `test_*.py`. No frameworks, no
-fixtures, no per-function suites unless asked. Trivial one-liners need no
-test, YAGNI applies to tests too.
+Lazy code without its check is unfinished. Verification is part of the requested work. Use the smallest meaningful check for non-trivial behavior, following the repository's existing test conventions. Preserve regression coverage for the demonstrated failure; do not impose a new test framework or a permanent self-check on trivial changes.
 
 ## Boundaries
 
-Ponytail governs what you build, not how you talk (pair with Caveman for
-terse prose). "stop ponytail" / "normal mode": revert. Level persists until
-changed or session end.
+Ponytail governs design choices; follow the user's requested communication
+style. Respect "stop ponytail", "normal mode", and the host's off command.
+Activation and lifetime follow the Persistence section above.
 
 The shortest path to done is the right path.
+
+Companion skills are optional. Reuse existing verification and recommend extra tooling only for a concrete missing capability.
