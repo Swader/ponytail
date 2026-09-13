@@ -44,7 +44,7 @@ for (const [relPath, normalize] of copies) {
 const INVARIANTS = [
   'in this codebase',                      // ladder rung: reuse what already exists (#217)
   'naive heuristic',                       // ceiling-comment rule
-  'ONE runnable check',                    // test reflex
+  'smallest meaningful check',             // verification follows repository conventions
   'flimsier algorithm',                    // robust-variant rule
   // the four "not lazy about" safety carve-outs: pin each so a reword in either
   // file can't silently drop one. Only validation was pinned before. These are the
@@ -54,7 +54,10 @@ const INVARIANTS = [
   'prevents data loss',
   'security',
   'accessibility',
-  'Lazy code without its check is unfinished', // one-check promoted to headline
+  'Lazy code without its check is unfinished', // verification remains required
+  'every requested behavior',               // simplicity cannot remove requirements
+  'relevant validation',                    // concise reports retain evidence
+  'remaining risks or limits',              // a small diff does not hide limits
 ];
 
 const skill = read('skills/ponytail/SKILL.md');
